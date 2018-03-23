@@ -61,5 +61,8 @@ pass_help() { die "Not implemented"; }
 
 pass_version() { die "Not implemented"; }
 
+[ $# -eq 1 ] && [ -f "$PASSWORD_STORE_DIR/$1" ] && set -- show "$@"
+[ $# -lt 2 ] && set -- list "$@"
+
 pass_"$@"
 
