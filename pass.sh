@@ -47,7 +47,7 @@ pass_generate() { die "Not implemented"; }
 
 pass_rm() { pass_remove "$@"; }
 pass_delete() { pass_remove "$@"; }
-pass_remove() { die "Not implemented"; }
+pass_remove() {( cd "$PASSWORD_STORE_DIR"; rm -i "$@"; )}
 
 pass_mv() { pass_rename "$@"; }
 pass_rename() { die "Not implemented"; }
