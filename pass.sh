@@ -29,7 +29,7 @@ fi
 pass_init() { die "Not implemented"; }
 
 pass_ls() { pass_list "$@"; }
-pass_list() { tree "$PASSWORD_STORE_DIR"; }
+pass_list() { tree "$PASSWORD_STORE_DIR/$1"; }
 
 pass_grep() { die "Not implemented"; }
 
