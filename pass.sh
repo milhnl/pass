@@ -25,6 +25,25 @@ if ! command tree >/dev/null 2>&1; then
     )}
 fi
 
+# FUNCTIONS -------------------------------------------------------------------
+store_file() { #1: relname
+    echo "$PASSWORD_STORE_DIR/$1.gpg"
+}
+
+to_qrcode() { die "Not implemented"; }
+
+to_clip() {
+    if [ `uname -s` = Linux ]; then
+        die "Not implemented"
+    elif [ `uname -s` = Darwin ]; then
+        pbcopy
+    fi
+}
+
+decrypt() { #1: relname
+    gpg -qd "$(store_file "$1")"
+}
+
 # COMMANDS --------------------------------------------------------------------
 pass_init() { die "Not implemented"; }
 
@@ -36,7 +55,22 @@ pass_grep() { die "Not implemented"; }
 pass_search() { pass_find "$@"; }
 pass_find() { die "Not implemented"; }
 
-pass_show() { die "Not implemented"; }
+pass_show() {
+    case "$1" in
+    --) decrypt "$2"; return ;;
+    -*)
+        set -- $(printf "%s" "$1" | sed '
+                s/=\([0-9][0-9]*\)$/ \1/;
+                s/^--/to_/;
+                s/^-c\([0-9]*\)/to_clip \1/;
+                s/^-q\([0-9]*\)/to_qrcode \1/;
+                s/\([^0-9]\)$/\1 1/;
+            ') "$([ "$2" = -- ] && echo "$3" || echo "$2")"
+        ;;
+    *) decrypt "$1"; return ;;
+    esac
+    decrypt "$3" | sed "${2}q;d" | "$1"
+}
 
 pass_add() { pass_insert "$@"; }
 pass_insert() { die "Not implemented"; }
