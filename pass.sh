@@ -34,11 +34,11 @@ store_file() { #1: relname
 to_qrcode() { die "Not implemented"; }
 
 to_clip() {
-    if [ `uname -s` = Linux ]; then
-        die "Not implemented"
-    elif [ `uname -s` = Darwin ]; then
-        pbcopy
-    fi
+    [ `uname -s` = Darwin ] && pbcopy && return
+    grep -iq microsoft /proc/version 2>/dev/null && clip.exe && return
+    which xclip >/dev/null 2>&1 && xclip && return
+    which xsel >/dev/null 2>&1 && xsel && return
+    die "No clipboard manager found. Install xclip or xsel."
 }
 
 decrypt() { #1: relname
