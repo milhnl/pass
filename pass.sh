@@ -1,6 +1,7 @@
 #!/usr/bin/env sh
 
 PASSWORD_STORE_DIR="${PASSWORD_STORE_DIR:-$HOME/.password-store}"
+GPG="${GPG-$( (which gpg2 || which gpg) 2>/dev/null)}"
 verbosity="0"
 
 trace() { [ "$verbosity" -ge "3" ] && printf '%s\n' "$*" >&2; true;}
@@ -41,7 +42,7 @@ to_clip() {
 }
 
 decrypt() { #1: relname
-    gpg -qd "$(store_file "$1")"
+    "$GPG" -qd "$(store_file "$1")"
 }
 
 # COMMANDS --------------------------------------------------------------------
