@@ -12,17 +12,17 @@ err() { [ "$verbosity" -ge "-1" ] && printf '%s\n' "$*" >&2; true;}
 die() { [ "$verbosity" -ge "-2" ] && printf '%s\n' "$*" >&2; exit 1; }
 
 # POLYFILLS -------------------------------------------------------------------
-if ! command tree >/dev/null 2>&1; then
+if ! which tree >/dev/null 2>&1; then
     tree() {(
-            cd "$(dirname "$1")"
-            find "$(basename "$1")" -print 2>/dev/null | awk '
-                !/\.$/ { \
-                    for (i=1; i<NF; i++) { \
-                        printf("%4s", "|") \
-                    } \
-                    print "-- "$NF \
+        cd "$(dirname "$1")"
+        find "$(basename "$1")" -print 2>/dev/null | awk '
+            !/\.$/ {
+                for (i=1; i<NF; i++) {
+                    printf("%4s", "|")
                 }
-            ' FS='/'
+                print "-- "$NF
+            }
+        ' FS='/'
     )}
 fi
 
