@@ -14,7 +14,7 @@ die() { [ "$verbosity" -ge "-2" ] && printf '%s\n' "$*" >&2; exit 1; }
 # POLYFILLS -------------------------------------------------------------------
 if ! which tree >/dev/null 2>&1; then
     tree() {(
-        cd "$(dirname "$1")"
+        cd "$(dirname "$1")" || die
         find "$(basename "$1")" -print 2>/dev/null | awk '
             !/\.$/ {
                 for (i=1; i<NF; i++) {
@@ -82,7 +82,7 @@ pass_generate() { die "Not implemented"; }
 
 pass_rm() { pass_remove "$@"; }
 pass_delete() { pass_remove "$@"; }
-pass_remove() {( cd "$PASSWORD_STORE_DIR"; rm -i "$@"; )}
+pass_remove() {( cd "$PASSWORD_STORE_DIR" || die; rm -i "$@"; )}
 
 pass_mv() { pass_rename "$@"; }
 pass_rename() { die "Not implemented"; }
