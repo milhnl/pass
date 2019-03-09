@@ -26,7 +26,33 @@ if ! which tree >/dev/null 2>&1; then
     )}
 fi
 
+echo() { printf %s\\n "$*" ; }
+
 # FUNCTIONS -------------------------------------------------------------------
+confirm() ( #1: prompt
+    printf "%s [y/N] " "$1"
+    read -r REPLY
+    [ "$REPLY" = y ]
+)
+
+prompt() {( #1?: prompt
+    printf "${1-Password: }" >/dev/stderr
+    IFS= read -r REPLY || return 1
+    echo "$REPLY"
+)}
+
+prompt_safe() {(
+    tty="$(stty -g 2>/dev/null)" || die "Can't provide safe terminal. Use '-e'"
+    trap 'stty "$tty"' EXIT INT TERM
+    stty -echo || return 1
+
+    REPLY="$(prompt 'Password: ')" || return 1; set -- "$REPLY"
+    REPLY="$(prompt '\nConfirm: ')" || return 1
+
+    printf '\n' >/dev/stderr
+    [ "$1" = "$REPLY" ] && echo "$1" || die "Don't match"
+)}
+
 store_file() { #1: relname
     echo "$PASSWORD_STORE_DIR/$1.gpg"
 }
@@ -43,6 +69,10 @@ to_clip() {
 
 decrypt() { #1: relname
     "$GPG" -qd "$(store_file "$1")"
+}
+
+encrypt() { #1: relname
+    "$GPG" -qe --yes --batch --default-recipient-self -o "$(store_file "$1")"
 }
 
 # COMMANDS --------------------------------------------------------------------
@@ -74,7 +104,22 @@ pass_show() {
 }
 
 pass_add() { pass_insert "$@"; }
-pass_insert() { die "Not implemented"; }
+pass_insert() {
+    handler="prompt_safe"
+    while getopts 'e(echo)m(multiline)f(force)' OPT:IDX "$@"; do
+        case "$OPT" in
+        e) handler="prompt" ;;
+        m) handler="cat" ;;
+        f) force="-f" ;;
+        *) die "Unknown option" ;;
+        esac
+    done
+    shift $(( ${IDX%.*} - 1 ))
+    test ! -f "$(store_file "$1")" || [ "$force" = -f ] \
+        || confirm "Overwrite '$1'?" || return 1
+    REPLY="$($handler)" || return 1
+    echo "$REPLY" | encrypt "$1" || die
+}
 
 pass_edit() { die "Not implemented"; }
 
