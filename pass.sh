@@ -155,7 +155,7 @@ pass_help() { die "Not implemented"; }
 pass_version() { die "Not implemented"; }
 
 [ $# -eq 1 ] && [ -f "$(store_file "$1")" ] && set -- show "$@"
-[ $# -lt 2 ] && set -- list "$@"
+[ $# -lt 2 ] && [ -d "$(store_file "$1")" ] && set -- list "$@"
 
 pass_"$@"
 
