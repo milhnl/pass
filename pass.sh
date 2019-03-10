@@ -54,6 +54,7 @@ prompt_safe() {(
 )}
 
 store_file() { #1: relname
+    test -d "$PASSWORD_STORE_DIR/$1" && echo "$PASSWORD_STORE_DIR/$1" && return
     echo "$PASSWORD_STORE_DIR/$1.gpg"
 }
 
@@ -127,7 +128,18 @@ pass_generate() { die "Not implemented"; }
 
 pass_rm() { pass_remove "$@"; }
 pass_delete() { pass_remove "$@"; }
-pass_remove() {( cd "$PASSWORD_STORE_DIR" || die; rm -i "$@"; )}
+pass_remove() {(
+    options="-i"
+    while getopts 'r(recursive)f(force)' OPT:IDX "$@"; do
+        case "$OPT" in
+        r) options="${options}r" ;;
+        f) options="${options}f" ;;
+        *) die "Unknown option" ;;
+        esac
+    done
+    shift $(( ${IDX%.*} - 1 ))
+    rm "$options" -- "$(store_file "$1")";
+)}
 
 pass_mv() { pass_rename "$@"; }
 pass_rename() { die "Not implemented"; }
