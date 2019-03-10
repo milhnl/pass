@@ -73,6 +73,7 @@ decrypt() { #1: relname
 }
 
 encrypt() { #1: relname
+    mkdir -p "$(dirname "$(store_file "$1")")"
     "$GPG" -qe --yes --batch --default-recipient-self -o "$(store_file "$1")"
 }
 
