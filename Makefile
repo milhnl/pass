@@ -14,8 +14,9 @@ dist:
 	@gzip ${NAME}-${VERSION}.tar
 	@rm -rf ${NAME}-${VERSION}
 
-install: pass.sh
-	@cp -f pass.sh "${DESTDIR}${PREFIX}/bin/pass"
+install: pass.sh getopts/getopts.sh
+	@awk '/^\. / { f=$$2; while (getline < f) print; next; } { print; }' \
+		<pass.sh >"${DESTDIR}${PREFIX}/bin/pass"
 	@chmod 755 "${DESTDIR}${PREFIX}/bin/pass"
 
 uninstall:

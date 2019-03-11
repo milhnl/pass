@@ -42,7 +42,5 @@ Two reasons:
 
 Bugs
 ----
-All of them. Like missing a ton of essential features. And the
-Makefile does not work with the included getopts. I think I have
-to write something for that. Don't know what yet.
+All of them. Like missing a ton of essential features.
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
 #pass - password manager
+. getopts/getopts.sh
 
 #Written in 2018-2019 by Michiel van den Heuvel (michielvdnheuvel@gmail.com)
 
