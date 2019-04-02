@@ -10,10 +10,6 @@
 #You should have received a copy of the CC0 Public Domain Dedication along with
 #this software. If not, see http://creativecommons.org/publicdomain/zero/1.0/
 
-PASSWORD_STORE_DIR="${PASSWORD_STORE_DIR:-$HOME/.password-store}"
-GPG="${GPG-$( (which gpg2 || which gpg) 2>/dev/null)}"
-verbosity="0"
-
 trace() { [ "$verbosity" -ge "3" ] && printf '%s\n' "$*" >&2; true;}
 debug() { [ "$verbosity" -ge "2" ] && printf '%s\n' "$*" >&2; true;}
 info() { [ "$verbosity" -ge "1" ] && printf '%s\n' "$*" >&2; true;}
@@ -22,7 +18,12 @@ err() { [ "$verbosity" -ge "-1" ] && printf '%s\n' "$*" >&2; true;}
 die() { [ "$verbosity" -ge "-2" ] && printf '%s\n' "$*" >&2; exit 1; }
 
 # POLYFILLS -------------------------------------------------------------------
-if ! which tree >/dev/null 2>&1; then
+get_command_path() { #1: commandname
+    #Maybe provide an option for systems without `command -v`
+    command -v "$1" 2>/dev/null
+}
+
+if ! get_command_path tree >/dev/null; then
     tree() {(
         cd "$(dirname "$1")" || die
         find "$(basename "$1")" -print 2>/dev/null | awk '
@@ -73,8 +74,8 @@ to_qrcode() { die "Not implemented"; }
 to_clip() {
     [ `uname -s` = Darwin ] && pbcopy && return
     grep -iq microsoft /proc/version 2>/dev/null && clip.exe && return
-    which xclip >/dev/null 2>&1 && xclip && return
-    which xsel >/dev/null 2>&1 && xsel && return
+    get_command_path xclip >/dev/null && xclip && return
+    get_command_path xsel >/dev/null && xsel && return
     die "No clipboard manager found. Install xclip or xsel."
 }
 
@@ -163,6 +164,11 @@ pass_git() { die "Not implemented"; }
 pass_help() { die "Not implemented"; }
 
 pass_version() { die "Not implemented"; }
+
+# MAIN ------------------------------------------------------------------------
+PASSWORD_STORE_DIR="${PASSWORD_STORE_DIR:-$HOME/.password-store}"
+GPG="${GPG:-$(get_command_path gpg2 || get_command_path gpg)}" || die "No gpg"
+verbosity="0"
 
 [ $# -eq 1 ] && [ -f "$(store_file "$1")" ] && set -- show "$@"
 [ $# -lt 2 ] && [ -d "$(store_file "$1")" ] && set -- list "$@"
