@@ -166,9 +166,9 @@ pass_help() { die "Not implemented"; }
 pass_version() { die "Not implemented"; }
 
 # MAIN ------------------------------------------------------------------------
+verbosity="0"
 PASSWORD_STORE_DIR="${PASSWORD_STORE_DIR:-$HOME/.password-store}"
 GPG="${GPG:-$(get_command_path gpg2 || get_command_path gpg)}" || die "No gpg"
-verbosity="0"
 
 [ $# -eq 1 ] && [ -f "$(store_file "$1")" ] && set -- show "$@"
 [ $# -lt 2 ] && [ -d "$(store_file "$1")" ] && set -- list "$@"
