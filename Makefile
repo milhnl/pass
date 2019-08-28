@@ -17,7 +17,9 @@ dist:
 install: pass.sh getopts/getopts.sh
 	@awk '/^\. / { f=$$2; while (getline < f) print; next; } { print; }' \
 		<pass.sh >"${DESTDIR}${PREFIX}/bin/pass"
+	@cp git-credential-pass.sh "${DESTDIR}${PREFIX}/bin/git-credential-pass"
 	@chmod 755 "${DESTDIR}${PREFIX}/bin/pass"
+	@chmod 755 "${DESTDIR}${PREFIX}/bin/git-credential-pass"
 
 uninstall:
 	@rm -f "${DESTDIR}${PREFIX}/bin/pass" \
