@@ -72,11 +72,19 @@ store_file() { #1: relname
 to_qrcode() { die "Not implemented"; }
 
 to_clip() {
-    [ `uname -s` = Darwin ] && pbcopy && return
-    grep -iq microsoft /proc/version 2>/dev/null && clip.exe && return
-    get_command_path xclip >/dev/null && xclip && return
-    get_command_path xsel >/dev/null && xsel && return
-    die "No clipboard manager found. Install xclip or xsel."
+    if [ `uname -s` = Darwin ]; then
+        pbcopy
+    elif grep -iq microsoft /proc/version 2>/dev/null; then
+        clip.exe
+    elif [ -n "$WAYLAND_DISPLAY" ] && get_command_path wl-copy >/dev/null; then
+        wl-copy
+    elif [ -n "$DISPLAY"] && get_command_path xclip >/dev/null; then
+        xclip
+    elif [ -n "$DISPLAY"] && get_command_path xsel >/dev/null; then
+        xsel
+    else
+        die "No clipboard manager found. Install xclip or xsel."
+    fi
 }
 
 decrypt() { #1: relname
