@@ -11,6 +11,7 @@ What's already supported
 All supported commands also fully support all options.
 
   - show
+  - edit
   - insert, add (does not honour .gpg-id file, uses default gpg id)
   - remove, rm, delete
   - list, ls

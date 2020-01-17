@@ -142,7 +142,17 @@ pass_insert() {
     echo "$REPLY" | encrypt "$1" || die
 }
 
-pass_edit() { die "Not implemented"; }
+pass_edit() {
+    set -- "$1" "$([ -d /dev/shm ] && export TMPDIR=/dev/shm || true; mktemp)"
+    eval "pass_edit_EXIT() { rm -f '$2'; }"
+    trap pass_edit_EXIT EXIT
+    decrypt "$1" >"$2"
+    "$EDITOR" "$2"
+    if ! decrypt "$1" | diff - "$2" >/dev/null 2>&1; then
+        <"$2" encrypt "$1"
+    fi
+    pass_edit_EXIT
+}
 
 pass_generate() { die "Not implemented"; }
 
