@@ -154,7 +154,22 @@ pass_edit() {
     pass_edit_EXIT
 }
 
-pass_generate() { die "Not implemented"; }
+pass_generate() {
+    default='A-Za-z0-9~`!@#$%^&*()_+=[]{}\|:;"<,>./?'"\'"
+    nsym_default='A-Za-z0-9'
+    cset="${PASSWORD_STORE_CHARACTER_SET:-$default}"
+    while getopts 'n(no-symbols)c(clip)i(in-place)f(force)' OPT:IDX "$@"; do
+        case "$OPT" in
+        n) cset="${PASSWORD_STORE_CHARACTER_SET_NO_SYMBOLS:-$nsym_default}" ;;
+        f) force='-f' ;;
+        *) die "Not implemented" ;;
+        esac
+    done
+    shift $(( ${IDX%.*} - 1 ))
+    test ! -f "$(store_file "$1")" || [ "$force" = -f ] \
+        || confirm "Overwrite '$1'?" || return 1
+    LC_ALL=C </dev/urandom tr -dc "$cset" | head -c "${2:-25}" | encrypt "$1"
+}
 
 pass_rm() { pass_remove "$@"; }
 pass_delete() { pass_remove "$@"; }
