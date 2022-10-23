@@ -1,8 +1,10 @@
 #!/usr/bin/env sh
 #pass - password manager
+set -eu
+
 . getopts/getopts.sh
 
-#Written in 2018-2019 by Michiel van den Heuvel (michielvdnheuvel@gmail.com)
+#Written in 2018-2022 by Michiel van den Heuvel (michielvdnheuvel@gmail.com)
 
 #To the extent possible under law, the author(s) have dedicated all copyright
 #and related and neighboring rights to this software to the public domain
@@ -65,8 +67,8 @@ prompt_safe() {(
 )}
 
 store_file() { #1: relname
-    test -d "$PASSWORD_STORE_DIR/$1" && echo "$PASSWORD_STORE_DIR/$1" && return
-    echo "$PASSWORD_STORE_DIR/$1.gpg"
+    set -- "$PASSWORD_STORE_DIR/${1-}"
+    [ -d "$1" ] && echo "$1" || echo "$1.gpg"
 }
 
 to_qrcode() { die "Not implemented"; }
@@ -100,7 +102,7 @@ encrypt() { #1: relname
 pass_init() { die "Not implemented"; }
 
 pass_ls() { pass_list "$@"; }
-pass_list() { tree "$PASSWORD_STORE_DIR/$1"; }
+pass_list() { tree "$PASSWORD_STORE_DIR/${1-}"; }
 
 pass_grep() { die "Not implemented"; }
 
@@ -136,7 +138,7 @@ pass_insert() {
         esac
     done
     shift $(( ${IDX%.*} - 1 ))
-    test ! -f "$(store_file "$1")" || [ "$force" = -f ] \
+    test ! -f "$(store_file "$1")" || [ "${force-}" = -f ] \
         || confirm "Overwrite '$1'?" || return 1
     REPLY="$($handler)" || return 1
     echo "$REPLY" | encrypt "$1" || die
@@ -166,7 +168,7 @@ pass_generate() {
         esac
     done
     shift $(( ${IDX%.*} - 1 ))
-    test ! -f "$(store_file "$1")" || [ "$force" = -f ] \
+    test ! -f "$(store_file "$1")" || [ "${force-}" = -f ] \
         || confirm "Overwrite '$1'?" || return 1
     LC_ALL=C </dev/urandom tr -dc "$cset" | head -c "${2:-25}" | encrypt "$1"
 }
@@ -203,8 +205,7 @@ verbosity="0"
 PASSWORD_STORE_DIR="${PASSWORD_STORE_DIR:-$HOME/.password-store}"
 GPG="${GPG:-$(get_command_path gpg2 || get_command_path gpg)}" || die "No gpg"
 
-[ $# -eq 1 ] && [ -f "$(store_file "$1")" ] && set -- show "$@"
-[ $# -lt 2 ] && [ -d "$(store_file "$1")" ] && set -- list "$@"
+[ $# -eq 1 ] && [ -f "$(store_file "$@")" ] && set -- show "$@"
+[ $# -lt 2 ] && [ -d "$(store_file "$@")" ] && set -- list "$@"
 
 pass_"$@"
-
