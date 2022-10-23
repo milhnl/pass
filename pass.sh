@@ -165,12 +165,10 @@ pass_edit() {
 }
 
 pass_generate() {
-    default='A-Za-z0-9~`!@#$%^&*()_+=[]{}\|:;"<,>./?'"\'"
-    nsym_default='A-Za-z0-9'
-    cset="${PASSWORD_STORE_CHARACTER_SET:-$default}"
+    cset="${PASSWORD_STORE_CHARACTER_SET:-[:punct:][:alnum:]}"
     while getopts 'n(no-symbols)c(clip)i(in-place)f(force)' OPT:IDX "$@"; do
         case "$OPT" in
-        n) cset="${PASSWORD_STORE_CHARACTER_SET_NO_SYMBOLS:-$nsym_default}" ;;
+        n) cset="${PASSWORD_STORE_CHARACTER_SET_NO_SYMBOLS:-[:alnum:]}" ;;
         f) force='-f' ;;
         *) die "Not implemented" ;;
         esac
