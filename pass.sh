@@ -68,7 +68,7 @@ prompt_safe() {(
 
 store_file() { #1: relname
     set -- "$PASSWORD_STORE_DIR/${1-}"
-    [ -d "$1" ] && echo "$1" || echo "$1.gpg"
+    [ -d "$1" ] || expr "$1" : '.*/$' >/dev/null && echo "$1" || echo "$1.gpg"
 }
 
 to_qrcode() { die "Not implemented"; }
@@ -96,6 +96,14 @@ decrypt() { #1: relname
 encrypt() { #1: relname
     mkdir -p "$(dirname "$(store_file "$1")")"
     "$GPG" -qe --yes --batch --default-recipient-self -o "$(store_file "$1")"
+}
+
+mv_or_cp_with_force() {
+    ! [ $# -eq 3 ] || set -- "$1" -i "$2" "$3"
+    ! [ "$2" = --force ] || set -- "$1" -f "$3" "$4"
+    [ $# -eq 4 ] && expr "$2" : '-[if]$' >/dev/null \
+        || die "Usage: pass $1 [-f] source target"
+    "$1" "$2" "$(store_file "$3")" "$(store_file "$4")"
 }
 
 # COMMANDS --------------------------------------------------------------------
@@ -189,10 +197,14 @@ pass_remove() {(
 )}
 
 pass_mv() { pass_rename "$@"; }
-pass_rename() { die "Not implemented"; }
+pass_rename() {
+    mv_or_cp_with_force mv "$@"
+}
 
 pass_cp() { pass_copy "$@"; }
-pass_copy() { die "Not implemented"; }
+pass_copy() {
+    mv_or_cp_with_force cp "$@"
+}
 
 pass_git() { die "Not implemented"; }
 
