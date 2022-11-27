@@ -71,6 +71,8 @@ store_file() { #1: relname
     [ -d "$1" ] || expr "$1" : '.*/$' >/dev/null && echo "$1" || echo "$1.gpg"
 }
 
+in_dir() ( cd "$1"; shift; "$@"; )
+
 to_qrcode() { die "Not implemented"; }
 
 to_clip() {
@@ -112,7 +114,21 @@ pass_init() { die "Not implemented"; }
 pass_ls() { pass_list "$@"; }
 pass_list() { tree "$PASSWORD_STORE_DIR/${1-}"; }
 
-pass_grep() { die "Not implemented"; }
+pass_grep() {
+    if [ -t 1 ] && echo 'a' | grep --color=always a >/dev/null 2>&1; then
+        set -- --color=always "$@"
+    fi
+    in_dir "$PASSWORD_STORE_DIR" find . -name "*.gpg" -exec sh -c '
+        name="${1%.gpg}"; name="${name#./}"; shift;
+        output="$(pass show -- "$name" | grep "$@")" || exit
+        if [ -t 1 ]; then
+            dir="$(dirname "$name")"; [ "$dir" != . ] || dir=""
+            file="$(basename "$name")";
+            name="$(printf "\e[34m%s\e[1m%s\e[0m" "${dir:+$dir/}" "$file")"
+        fi
+        printf "%s:\n%s\n" "$name" "$output"
+    ' -- \{\} "$@" \;
+}
 
 pass_search() { pass_find "$@"; }
 pass_find() { die "Not implemented"; }
