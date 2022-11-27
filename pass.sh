@@ -170,7 +170,7 @@ pass_insert() {
 
 pass_edit() {
     set -- "$1" "$([ -d /dev/shm ] && export TMPDIR=/dev/shm || true; mktemp)"
-    eval "pass_edit_EXIT() { rm -f '$2'; }"
+    eval "pass_edit_EXIT() { rm -f '$2'; trap - EXIT; }"
     trap pass_edit_EXIT EXIT
     decrypt "$1" >"$2"
     "$EDITOR" "$2"
