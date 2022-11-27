@@ -181,18 +181,27 @@ pass_edit() {
 }
 
 pass_generate() {
+    unset show rest force
     cset="${PASSWORD_STORE_CHARACTER_SET:-[:punct:][:alnum:]}"
     while getopts 'n(no-symbols)c(clip)i(in-place)f(force)' OPT:IDX "$@"; do
         case "$OPT" in
         n) cset="${PASSWORD_STORE_CHARACTER_SET_NO_SYMBOLS:-[:alnum:]}" ;;
+        c) show='-c' ;;
+        i) rest='-i' ;;
         f) force='-f' ;;
         *) die "Not implemented" ;;
         esac
     done
     shift $(( ${IDX%.*} - 1 ))
+    set -- "$1" "${2-${PASSWORD_STORE_GENERATED_LENGTH:-25}}"
     test ! -f "$(store_file "$1")" || [ "${force-}" = -f ] \
         || confirm "Overwrite '$1'?" || return 1
-    LC_ALL=C </dev/urandom tr -dc "$cset" | head -c "${2:-25}" | encrypt "$1"
+    rest="${rest+$(pass show -- "$1" | sed 1s/.*//)}"
+    {
+        LC_ALL=C </dev/urandom tr -dc "$cset" | head -c "$2"
+        echo "${rest-}"
+    } | encrypt "$1"
+    pass_show ${show-} "$1"
 }
 
 pass_rm() { pass_remove "$@"; }
