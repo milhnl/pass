@@ -6,6 +6,9 @@ PREFIX ?= /usr/local
 all:
 	@echo "Only a shell script, try 'make install' instead."
 
+test:
+	sh test.sh
+
 dist:
 	@echo creating dist tarball
 	@mkdir -p ${NAME}-${VERSION}
@@ -29,4 +32,4 @@ install: pass.sh getopts/getopts.sh
 uninstall:
 	@rm -f "${DESTDIR}${PREFIX}/bin/pass" \
 
-.PHONY: dist install uninstall
+.PHONY: dist install uninstall test
