@@ -11,18 +11,17 @@ trap exit_trap EXIT
 mkdir -p "$GNUPGHOME" "$PASSWORD_STORE_DIR"
 chmod og-rwx "$GNUPGHOME" "$PASSWORD_STORE_DIR"
 
-gpg --batch --gen-key <<EOF
+gpg -q --batch --gen-key <<EOF
 %no-protection
 %transient-key
 Key-Type: 1
 Key-Length: 2048
 Subkey-Type: 1
 Subkey-Length: 2048
-Name-Real: Pass One
-Name-Email: pass1@example.com
+Name-Email: key1
 Expire-Date: 0
 EOF
 
 echo abc123 | sh pass.sh insert -m first || die insert failed
 sh pass.sh mv first second || die mv failed
-sh pass.sh show second | grep -xF abc123 || die show failed
+sh pass.sh show second | grep -qxF abc123 || die show failed
