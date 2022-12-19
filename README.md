@@ -10,9 +10,10 @@ What's already supported
 ------------------------
 All supported commands also fully support all options.
 
+  - init
   - show
   - edit
-  - insert, add (does not honour .gpg-id file, uses default gpg id)
+  - insert, add
   - remove, rm, delete
   - list, ls
 

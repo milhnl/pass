@@ -66,6 +66,13 @@ prompt_safe() {(
     [ "$1" = "$REPLY" ] && echo "$1" || die "Don't match"
 )}
 
+upwardfind() { #1: abspath, 2: name
+    while [ -n "$1" ]; do
+        [ -e "$1/$2" ] && { echo "$1/$2"; return; } || set -- "${1%/*}" "$2"
+    done
+    return 1
+}
+
 store_file() { #1: relname
     set -- "$PASSWORD_STORE_DIR/${1-}"
     [ -d "$1" ] || expr "$1" : '.*/$' >/dev/null && echo "$1" || echo "$1.gpg"
@@ -96,8 +103,15 @@ decrypt() { #1: relname
 }
 
 encrypt() { #1: relname
-    mkdir -p "$(dirname "$(store_file "$1")")"
-    "$GPG" -qe --yes --batch --default-recipient-self -o "$(store_file "$1")"
+    set -- "$(store_file "$1")"
+    set -- "$(upwardfind "$(dirname "$1")" .gpg-id)" "$1"
+    [ -n "$1" ] || die "ERROR: Missing .gpg-id. Run init first to set it"
+    mkdir -p "$(dirname "$2")"
+    while read -r recipient; do
+        set -- "$@" -r "$recipient"
+    done <"$1"
+    shift
+    "$GPG" -qe --yes --batch -o "$@"
 }
 
 mv_or_cp_with_force() {
@@ -109,7 +123,29 @@ mv_or_cp_with_force() {
 }
 
 # COMMANDS --------------------------------------------------------------------
-pass_init() { die "Not implemented"; }
+pass_init() {
+    pass_dir="$PASSWORD_STORE_DIR"
+    while getopts 'p:(path)' OPT:IDX "$@"; do
+        case "$OPT" in
+        p) pass_dir="$PASSWORD_STORE_DIR/$OPTARG" ;;
+        *) die "Unknown option" ;;
+        esac
+    done
+    shift $(( ${IDX%.*} - 1 ))
+    rm -f "$pass_dir/.gpg-id"
+    if [ "$1" != '' ]; then
+        mkdir -p "$pass_dir"
+        for gpg_id in "$@"; do
+            echo "$gpg_id" >>"$pass_dir/.gpg-id"
+        done
+        GPG="$GPG" find "$pass_dir" -name "*.gpg" -exec sh -c '
+            "$GPG" -qd "$1" | "$GPG" --yes --batch -q -eo "$1.new" '"$(for x do
+                printf %s\\n "$x"|sed "s/'/'\\\\''/g;1s/^/-r '/;\$s/\$/' \\\\/"
+            done; printf \ )"'
+            mv "$1.new" "$1"
+        ' -- \{\} \;
+    fi
+}
 
 pass_ls() { pass_list "$@"; }
 pass_list() { tree "$PASSWORD_STORE_DIR/${1-}"; }
