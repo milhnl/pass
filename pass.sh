@@ -267,7 +267,47 @@ pass_copy() {
 
 pass_git() { die "Not implemented"; }
 
-pass_help() { die "Not implemented"; }
+pass_help() {
+cat <<"EOF"
+Usage:
+    pass ls [path]
+        Displays password files with tree
+    pass show <name>
+        Displays first line of password
+        -c, --clip        Copy to clipboard, don't print
+    pass grep [grep-options...]
+        Search with grep in all decrypted password files
+    pass insert [options...] <name>
+        Create a new password
+        -e, --echo        Show password as you type it
+        -m, --multiline   Use `cat` to read. Ctrl+D to end
+        -f, --force       Don't ask to confirm overwriting
+    pass edit <name>
+        Edit a password with $EDITOR
+    pass generate [options...] <name> [length]
+        Generate a new password
+        -c, --clip        Copy to clipboard, don't print
+        -f, --force       Don't ask to confirm overwriting
+        -i, --in-place    Replace first line of password
+        -n, --no-symbols  Only use alphanumerics
+    pass rm [options...] <path>
+        Remove password(s)
+        -r, --recursive   Recursively delete (like `rm`)
+        -f, --force       Don't ask to confirm
+    pass mv [options...] <path>
+        Move password(s)
+        -f, --force       Don't ask to confirm overwriting
+    pass cp [options...] <path>
+        Copy password(s)
+        -f, --force       Don't ask to confirm overwriting
+    pass git <git-subcommand> [git-options...]
+        Run git command in the password store
+    pass help
+        Print help text
+    pass version
+        Show version
+EOF
+}
 
 pass_version() { die "Not implemented"; }
 
