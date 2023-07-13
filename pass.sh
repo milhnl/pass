@@ -74,8 +74,10 @@ upwardfind() { #1: abspath, 2: name
 }
 
 store_file() { #1: relname
-    set -- "$PASSWORD_STORE_DIR/${1-}"
-    [ -d "$1" ] || expr "$1" : '.*/$' >/dev/null && echo "$1" || echo "$1.gpg"
+    [ "$1" = -g ] && set -- "$2" basename || set -- "$1" echo
+    set -- "$PASSWORD_STORE_DIR/${1-}" "$2"
+    set -- "$1`[ -d "$1" ] || expr "$1" : '.*/$' >/dev/null || echo .gpg`" "$2"
+    "$2" "$1"
 }
 
 in_dir() ( cd "$1"; shift; "$@"; )
@@ -120,6 +122,29 @@ mv_or_cp_with_force() {
     [ $# -eq 4 ] && expr "$2" : '-[if]$' >/dev/null \
         || die "Usage: pass $1 [-f] source target"
     "$1" "$2" "$(store_file "$3")" "$(store_file "$4")"
+    if pgit_dir "$4" >/dev/null; then
+        pgit "$4" add -N "$(store_file -g "$4")"
+        if [ "$(pgit_dir "$3")" = "$(pgit_dir "$3")" ] && [ "$1" = mv ]; then
+            pgit "$3" commit -m "Move password" \
+                "$(store_file -g "$3")" "$(store_file -g "$4")"
+        else
+            pgit "$4" commit -m "Add password" "$(store_file -g "$4")"
+        fi
+    fi
+    if pgit_dir "$3" >/dev/null && [ "$1" = mv ] && [ -n "$(\
+            pgit "$3" diff --name-only --diff-filter=D -- "$3")" ]; then
+        pgit "$3" commit -m "Remove password" "$(store_file -g "$3")"
+    fi
+}
+
+pgit() (
+    cd "$(dirname "$(store_file "$1")")"
+    shift
+    git --literal-pathspecs "$@"
+)
+
+pgit_dir() {
+    pgit "$1" rev-parse --path-format=absolute --git-dir 2>/dev/null
 }
 
 # COMMANDS --------------------------------------------------------------------
@@ -202,6 +227,10 @@ pass_insert() {
         || confirm "Overwrite '$1'?" || return 1
     REPLY="$($handler)" || return 1
     echo "$REPLY" | encrypt "$1" || die
+    if pgit_dir "$1" >/dev/null; then
+        pgit "$1" add -N "$(store_file -g "$1")"
+        pgit "$1" commit -m "Add password" -- "$(store_file -g "$1")"
+    fi
 }
 
 pass_edit() {
@@ -214,6 +243,8 @@ pass_edit() {
         <"$2" encrypt "$1"
     fi
     pass_edit_EXIT
+    ! pgit_dir "$1" >/dev/null \
+        || pgit "$1" commit -m "Edit password" -- "$(store_file -g "$1")"
 }
 
 pass_generate() {
@@ -238,6 +269,10 @@ pass_generate() {
         echo "${rest-}"
     } | encrypt "$1"
     pass_show ${show-} "$1"
+    if pgit_dir "$1" >/dev/null; then
+        pgit "$1" add -N "$(store_file -g "$1")"
+        pgit "$1" commit -m "Edit password" -- "$(store_file -g "$1")"
+    fi
 }
 
 pass_rm() { pass_remove "$@"; }
@@ -253,6 +288,9 @@ pass_remove() {(
     done
     shift $(( ${IDX%.*} - 1 ))
     rm "$options" -- "$(store_file "$1")";
+    if pgit_dir "$1" >/dev/null; then
+        pgit "$1" commit -m "Remove password" -- "$(store_file -g "$1")"
+    fi
 )}
 
 pass_mv() { pass_rename "$@"; }
@@ -265,7 +303,9 @@ pass_copy() {
     mv_or_cp_with_force cp "$@"
 }
 
-pass_git() { die "Not implemented"; }
+pass_git() {
+    pgit "." "$@"
+}
 
 pass_help() {
 cat <<"EOF"
