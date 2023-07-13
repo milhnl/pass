@@ -28,6 +28,9 @@ install: pass.sh getopts/getopts.sh
 	@cp git-credential-pass.sh "${DESTDIR}${PREFIX}/bin/git-credential-pass"
 	@chmod 755 "${DESTDIR}${PREFIX}/bin/pass"
 	@chmod 755 "${DESTDIR}${PREFIX}/bin/git-credential-pass"
+	@mkdir -p ${PREFIX}/share/zsh/site-functions
+	@cp completion.zsh ${PREFIX}/share/zsh/site-functions/_pass
+	@chmod 755 ${PREFIX}/share/zsh/site-functions/_pass
 
 uninstall:
 	@rm -f "${DESTDIR}${PREFIX}/bin/pass" \
