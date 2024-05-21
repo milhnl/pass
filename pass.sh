@@ -183,7 +183,7 @@ pass_show() {
         ;;
     *) decrypt "$1"; return ;;
     esac
-    decrypt "$3" | sed "${2}q;d" | "$1"
+    decrypt "$3" | sed "${2}q;d" | tr -d \\n | "$1"
 }
 
 pass_add() { pass_insert "$@"; }
